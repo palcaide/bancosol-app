@@ -1,0 +1,18 @@
+# Compilación de Java y Maven (archivos temporales y ejecutables)
+target/
+*.class
+
+# Configuración interna de IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Configuración de VS Code (por si acaso)
+.vscode/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs de ejecución
+*.log
