@@ -4,7 +4,7 @@ Web application to coordinate food-donation campaigns: volunteers register
 donations at collection points, managers verify them and follow each
 campaign's progress. Course project, Web Application Programming (WUT).
 
-**Status:** work in progress (Early Pass). See `docs/` for the proposal.
+**Status:** work in progress (Early Pass). 
 
 ## Stack
 Spring Boot · Java · Thymeleaf · Spring Data JPA ·
