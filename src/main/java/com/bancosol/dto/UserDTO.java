@@ -1,5 +1,6 @@
 package com.bancosol.dto;
 
+import com.bancosol.entity.Role;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -21,7 +22,7 @@ public class UserDTO {
     @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
     private String password; // Opcional al editar, obligatoria al crear
 
-    private String role; // ROLE_USER, ROLE_MANAGER, ROLE_ADMIN
+    private Role role; // ADMIN, MANAGER, USER
 
     private boolean enabled = true;
 }

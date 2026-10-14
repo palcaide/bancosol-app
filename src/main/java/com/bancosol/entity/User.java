@@ -2,6 +2,7 @@ package com.bancosol.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -23,9 +24,14 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String role; // "ROLE_USER", "ROLE_MANAGER", "ROLE_ADMIN"
+    private Role role; // ADMIN, MANAGER, USER
 
     @Column(nullable = false)
     private boolean enabled = true;
+
+    // Campos para el reseteo autoservicio de contraseña
+    private String resetToken;
+    private LocalDateTime resetTokenExpiry;
 }

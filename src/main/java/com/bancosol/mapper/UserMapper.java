@@ -13,7 +13,7 @@ public class UserMapper {
                 entity.getId(),
                 entity.getUsername(),
                 entity.getEmail(),
-                null, // No devolvemos la contraseña por seguridad
+                null, // Nunca exponemos la contraseña en el DTO
                 entity.getRole(),
                 entity.isEnabled()
         );
