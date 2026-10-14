@@ -1,75 +1,110 @@
 package com.bancosol.service;
 
 import com.bancosol.dto.UserDTO;
+import com.bancosol.entity.Role;
 import com.bancosol.entity.User;
 import com.bancosol.mapper.UserMapper;
 import com.bancosol.repository.UserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
-        this.userRepository = userRepository;
-        this.userMapper = userMapper;
-    }
-
-    @Transactional(readOnly = true)
-    public List<UserDTO> findAll() {
-        return userRepository.findAll()
-                .stream()
-                .map(userMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public UserDTO findById(Integer id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
+    public UserDTO findUser(Integer id) {
+        User user = this.userRepository.findById(id).orElseThrow();
         return userMapper.toDTO(user);
     }
 
-    @Transactional
-    public UserDTO registerUser(UserDTO dto) {
-        if (dto.getPassword() == null || dto.getPassword().isBlank()) {
-            throw new IllegalArgumentException("La contraseña es requerida para el registro");
-        }
-        User entity = userMapper.toEntity(dto);
-        // Cifrado obligatorio de la contraseña antes de guardar en PostgreSQL
-        entity.setPassword(passwordEncoder.encode(dto.getPassword()));
+    public List<UserDTO> listAll() {
+        return userMapper.toDTOList(userRepository.findAll());
+    }
 
-        // Rol por defecto si no viene indicado
-        if (entity.getRole() == null || entity.getRole().isBlank()) {
-            entity.setRole("ROLE_USER");
-        }
-        entity.setEnabled(true);
+    public boolean existsUsername(String username) {
+        if (username == null) return false;
+        return userRepository.findAll().stream()
+                .anyMatch(u -> username.equalsIgnoreCase(u.getUsername()));
+    }
 
-        User saved = userRepository.save(entity);
-        return userMapper.toDTO(saved);
+    public boolean existsOtherUsername(Integer currentId, String username) {
+        if (username == null) return false;
+        return userRepository.findAll().stream()
+                .anyMatch(u -> username.equalsIgnoreCase(u.getUsername()) && !u.getId().equals(currentId));
     }
 
     @Transactional
-    public void updateUserRole(Integer id, String newRole) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
-        user.setRole(newRole);
+    public UserDTO createUser(String username,
+                              String rawPassword,
+                              String email,
+                              Role role,
+                              Boolean enabled) {
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setRole(role != null ? role : Role.USER);
+        user.setEnabled(enabled != null ? enabled : Boolean.TRUE);
+        return userMapper.toDTO(userRepository.save(user));
+    }
+
+    @Transactional
+    public void updateRoleAndStatus(Integer id, Role role, Boolean enabled) {
+        User user = userRepository.findById(id).orElseThrow();
+        if (role != null) user.setRole(role);
+        if (enabled != null) user.setEnabled(enabled);
         userRepository.save(user);
     }
 
     @Transactional
-    public void toggleUserStatus(Integer id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
-        user.setEnabled(!user.isEnabled());
+    public void resetPassword(Integer id, String newRawPassword) {
+        if (newRawPassword == null || newRawPassword.isBlank()) return;
+        User user = userRepository.findById(id).orElseThrow();
+        user.setPassword(passwordEncoder.encode(newRawPassword));
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void updateUserComplete(Integer id,
+                                   String username,
+                                   String email,
+                                   Role role,
+                                   Boolean enabled,
+                                   String newRawPassword) {
+        User user = userRepository.findById(id).orElseThrow();
+        if (username != null && !username.isBlank()) user.setUsername(username.trim());
+        if (email != null && !email.isBlank())       user.setEmail(email.trim());
+        if (role != null)    user.setRole(role);
+        if (enabled != null) user.setEnabled(enabled);
+        if (newRawPassword != null && !newRawPassword.isBlank()) {
+            user.setPassword(passwordEncoder.encode(newRawPassword));
+        }
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public UserDTO updateProfile(Integer id, String email) {
+        User user = this.userRepository.findById(id).orElseThrow();
+        user.setEmail(email);
+        return userMapper.toDTO(this.userRepository.save(user));
+    }
+
+    @Transactional
+    public boolean changePassword(Integer id, String currentRawPassword, String newRawPassword) {
+        User user = this.userRepository.findById(id).orElseThrow();
+        if (!passwordEncoder.matches(currentRawPassword, user.getPassword())) {
+            return false;
+        }
+        user.setPassword(passwordEncoder.encode(newRawPassword));
+        this.userRepository.save(user);
+        return true;
     }
 }

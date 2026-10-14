@@ -5,7 +5,7 @@ import com.bancosol.entity.Campaign;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CampaignMapper {
+public class CampaignMapper extends AbstractMapper<Campaign, CampaignDTO>{
 
     public CampaignDTO toDTO(Campaign entity) {
         if (entity == null) return null;

@@ -4,47 +4,68 @@ import com.bancosol.dto.StoreDTO;
 import com.bancosol.entity.Store;
 import com.bancosol.mapper.StoreMapper;
 import com.bancosol.repository.StoreRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
-public class StoreService {
+@AllArgsConstructor
+public class StoreService{
 
     private final StoreRepository storeRepository;
     private final StoreMapper storeMapper;
 
-    public StoreService(StoreRepository storeRepository, StoreMapper storeMapper) {
-        this.storeRepository = storeRepository;
-        this.storeMapper = storeMapper;
+    public List<StoreDTO> listStores() {
+        List<Store> stores = this.storeRepository.findAll();
+        return storeMapper.toDTOList(stores);
     }
 
-    @Transactional(readOnly = true)
-    public List<StoreDTO> findAll() {
-        return storeRepository.findAll()
-                .stream()
-                .map(storeMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public StoreDTO findById(Integer id) {
-        Store store = storeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Punto de recogida no encontrado con ID: " + id));
+    public StoreDTO findStore(Integer id) {
+        if (id == null) {
+            return new StoreDTO();
+        }
+        Store store = this.storeRepository.findById(id).orElseThrow();
         return storeMapper.toDTO(store);
     }
 
     @Transactional
-    public StoreDTO save(StoreDTO dto) {
-        Store entity = storeMapper.toEntity(dto);
-        Store saved = storeRepository.save(entity);
-        return storeMapper.toDTO(saved);
+    public Integer saveStore(StoreDTO storeDTO) {
+        return this.saveStore(
+                storeDTO.getId(),
+                storeDTO.getName(),
+                storeDTO.getAddress(),
+                storeDTO.getCity(),
+                storeDTO.isActive()
+        );
     }
 
     @Transactional
-    public void deleteById(Integer id) {
-        storeRepository.deleteById(id);
+    public Integer saveStore(Integer id,
+                             String name,
+                             String address,
+                             String city,
+                             boolean active) {
+
+        Store store;
+        if (id == null) {
+            store = new Store();
+        } else {
+            store = this.storeRepository.findById(id).orElseThrow();
+        }
+
+        store.setName(name);
+        store.setAddress(address);
+        store.setCity(city);
+        store.setActive(active);
+
+        return this.storeRepository.save(store).getId();
+    }
+
+    @Transactional
+    public void deleteStore(Integer id) {
+        Store store = this.storeRepository.findById(id).orElseThrow();
+        this.storeRepository.delete(store);
     }
 }

@@ -5,7 +5,7 @@ import com.bancosol.entity.Store;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StoreMapper {
+public class StoreMapper extends AbstractMapper<Store, StoreDTO>{
 
     public StoreDTO toDTO(Store entity) {
         if (entity == null) return null;

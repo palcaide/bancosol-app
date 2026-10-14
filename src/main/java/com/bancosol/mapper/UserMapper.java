@@ -5,20 +5,22 @@ import com.bancosol.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserMapper {
+public class UserMapper extends AbstractMapper<User, UserDTO> {
 
+    @Override
     public UserDTO toDTO(User entity) {
         if (entity == null) return null;
         return new UserDTO(
                 entity.getId(),
                 entity.getUsername(),
                 entity.getEmail(),
-                null, // Nunca exponemos la contraseña en el DTO
+                null, // Contraseña oculta por seguridad en el DTO
                 entity.getRole(),
                 entity.isEnabled()
         );
     }
 
+    @Override
     public User toEntity(UserDTO dto) {
         if (dto == null) return null;
         User entity = new User();
